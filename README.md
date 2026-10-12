@@ -28,6 +28,8 @@ python3 -m venv .venv && .venv/bin/pip install pandas xlrd matplotlib
 D="$HOME/Library/CloudStorage/OneDrive-UCB-O365/Work/Projects/2026_GetzVoleTrapping/Data"
 .venv/bin/python scripts/build_dataset.py "$D/getz_website_mirror" "$D/processed"
 .venv/bin/python scripts/export_web.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
+.venv/bin/python scripts/social.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
+.venv/bin/python scripts/traps.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
 .venv/bin/python scripts/make_tile.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/tile.png
 ```
 
@@ -62,6 +64,15 @@ To refresh the mirror: `wget --mirror --no-parent -e robots=off --no-host-direct
 
 - **Body mass** (`export_web.py: mass_summaries`): monthly grid captures only, one value per animal per
   session (mean mass, highest repro code), masses 1–100 g; the ~20 male records coded pregnant are dropped.
+
+- **Social structure** (`social.py`): a *co-capture* is two same-species animals of known sex in the same
+  trap at the same check (multiple-capture traps); *trap sharing* is any common station within a session.
+  Outputs opposite-sex co-capture rate by density, two-animal trap composition vs. random expectation,
+  partner counts for breeding animals, partners vs. male mass, and pair fidelity (pairs caught together
+  again next session vs. neighbor pairs vs. any pair).
+- **Trap return** (`traps.py`): distance to previous capture (within session / later session) and, for
+  animals caught in 5+ sessions, captures per session and same-trap return over their first five sessions.
+  Exact-layout grids only (excludes 7, 12–14).
 
 ## Not yet used
 
