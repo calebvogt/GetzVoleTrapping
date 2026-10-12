@@ -30,6 +30,7 @@ D="$HOME/Library/CloudStorage/OneDrive-UCB-O365/Work/Projects/2026_GetzVoleTrapp
 .venv/bin/python scripts/export_web.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
 .venv/bin/python scripts/social.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
 .venv/bin/python scripts/traps.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
+.venv/bin/python scripts/structure.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
 .venv/bin/python scripts/make_tile.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/tile.png
 ```
 
@@ -73,6 +74,11 @@ To refresh the mirror: `wget --mirror --no-parent -e robots=off --no-host-direct
 - **Trap return** (`traps.py`): distance to previous capture (within session / later session) and, for
   animals caught in 5+ sessions, captures per session and same-trap return over their first five sessions.
   Exact-layout grids only (excludes 7, 12–14).
+
+- **Dataset structure** (`structure.py`): animals caught per grid per month (coverage), first-capture vs.
+  caught-before counts per session, residence curves (share still known alive t months after first capture,
+  animals first caught ≥ 18 months before their grid's last session), share of new animals by month, and a
+  year × month breeding calendar on the unmanipulated grids (females pregnant, males in breeding condition).
 
 ## Not yet used
 
