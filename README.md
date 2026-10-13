@@ -15,8 +15,8 @@ Read Getz's usage request on his site before publishing analyses.
 
 | Where | What |
 |---|---|
-| OneDrive `2026_GetzVoleTrapping/Data/getz_website_mirror/` | Full `wget` mirror of the Getz site (167 files, untouched) |
-| OneDrive `2026_GetzVoleTrapping/Data/processed/` | Tidy CSVs produced by `build_dataset.py` |
+| Synology `Work/Projects/2026_GetzVoleTrapping/Data/getz_website_mirror/` | Full `wget` mirror of the Getz site (167 files, untouched) |
+| Synology `Work/Projects/2026_GetzVoleTrapping/Data/processed/` | Tidy CSVs produced by `build_dataset.py` |
 | `calebvogt.github.io/projects/getz-vole-trapping/data/` | Compact JSON for the explorer (`export_web.py`) |
 | `calebvogt.github.io/_projects/2026-getz-vole-trapping.html` | The explorer page (JS/CSS live next to the data) |
 | `scripts/` | The pipeline (this repo) |
@@ -25,7 +25,10 @@ Read Getz's usage request on his site before publishing analyses.
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install pandas xlrd matplotlib
-D="$HOME/Library/CloudStorage/OneDrive-UCB-O365/Work/Projects/2026_GetzVoleTrapping/Data"
+# The data live on the Synology (moved off OneDrive 2026-10-12):
+#   Windows  Z:\Work\Projects\2026_GetzVoleTrapping\Data
+#   macOS    /Volumes/Vogt_28TB/Work/Projects/2026_GetzVoleTrapping/Data  (your mount name may differ)
+D="/Volumes/Vogt_28TB/Work/Projects/2026_GetzVoleTrapping/Data"
 .venv/bin/python scripts/build_dataset.py "$D/getz_website_mirror" "$D/processed"
 .venv/bin/python scripts/export_web.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
 .venv/bin/python scripts/social.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
