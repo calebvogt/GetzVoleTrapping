@@ -14,6 +14,7 @@ AM < PM < Eve within a day.
     python scripts/traps.py <processed_dir> <web_data_dir>
 """
 import json
+import os
 import sys
 
 import numpy as np
@@ -90,6 +91,7 @@ def summarize(r, s):
 
 
 def main(proc, out):
+    os.makedirs(out, exist_ok=True)
     g = load(proc)
     r = returns(g)
     s = experience(g, r)

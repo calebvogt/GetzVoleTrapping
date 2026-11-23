@@ -5,6 +5,7 @@
 Writes captures.csv, nest_captures.csv, individuals.csv, sessions.csv,
 sites.csv, removals.csv and the population tables to <out_dir>.
 """
+import os
 import sys
 
 import numpy as np
@@ -175,6 +176,7 @@ def main_series(pop):
 
 
 def main(mirror, out):
+    os.makedirs(out, exist_ok=True)
     raw = load_all(mirror)
     df = clean_captures(raw)
 

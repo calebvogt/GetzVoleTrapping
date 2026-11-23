@@ -14,6 +14,7 @@ Density is the species' MNKA per hectare on that grid in that session.
 """
 import itertools
 import json
+import os
 import sys
 
 import numpy as np
@@ -196,6 +197,7 @@ def summarize(a, d, c, sess):
 
 
 def main(proc, out):
+    os.makedirs(out, exist_ok=True)
     c, pop, sess = load(proc)
     d = dyads(c)
     a = animal_sessions(c, d, pop)

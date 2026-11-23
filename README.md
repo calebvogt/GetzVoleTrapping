@@ -1,89 +1,91 @@
-# GetzVoleTrapping
+# Getz vole trapping data: cleaning and analysis
 
-Cleaning pipeline and web export for Lowell L. Getz's long-term vole live-trapping data
-(University of Illinois, 1971–1997), which he released at <https://www.life.illinois.edu/getz/>.
-The output powers the interactive explorer at
-`calebvogt.github.io/projects/getz-vole-trapping/`.
+Code that cleans and summarises Lowell L. Getz's long-term live-trapping study of prairie voles
+(*Microtus ochrogaster*) and meadow voles (*M. pennsylvanicus*) in central Illinois, 1971–1997, and exports
+the results for the interactive explorer on the project page:
+**<https://calebvogt.github.io/projects/getz-vole-trapping/>**
 
-All data credit belongs to Getz and colleagues. Archived versions are on EDI:
-[25-year study](https://doi.org/10.6073/pasta/62617e944d053ba553d37cc4568c2367),
-[twice-weekly alfalfa study](https://doi.org/10.6073/pasta/e62ec4197e8e2a687f2ef9d2c13cc3c0),
-[*Blarina* densities](https://doi.org/10.6073/pasta/920c200ed6b3dd3dea83e8a62e5dff44).
-Read Getz's usage request on his site before publishing analyses.
-
-## Layout
-
-| Where | What |
-|---|---|
-| Synology `Work/Projects/2026_GetzVoleTrapping/Data/getz_website_mirror/` | Full `wget` mirror of the Getz site (167 files, untouched) |
-| Synology `Work/Projects/2026_GetzVoleTrapping/Data/processed/` | Tidy CSVs produced by `build_dataset.py` |
-| `calebvogt.github.io/projects/getz-vole-trapping/data/` | Compact JSON for the explorer (`export_web.py`) |
-| `calebvogt.github.io/_projects/2026-getz-vole-trapping.html` | The explorer page (JS/CSS live next to the data) |
-| `scripts/` | The pipeline (this repo) |
+The data are Getz's, published on his site at <https://www.life.illinois.edu/getz/>. The project page
+lists the data sources, credits and his terms of use.
 
 ## Run
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install pandas xlrd matplotlib
-# The data live on the Synology (moved off OneDrive 2026-10-12):
-#   Windows  Z:\Work\Projects\2026_GetzVoleTrapping\Data
-#   macOS    /Volumes/Vogt_28TB/Work/Projects/2026_GetzVoleTrapping/Data  (your mount name may differ)
-D="/Volumes/Vogt_28TB/Work/Projects/2026_GetzVoleTrapping/Data"
-.venv/bin/python scripts/build_dataset.py "$D/getz_website_mirror" "$D/processed"
-.venv/bin/python scripts/export_web.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
-.venv/bin/python scripts/social.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
-.venv/bin/python scripts/traps.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
-.venv/bin/python scripts/structure.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/data
-.venv/bin/python scripts/make_tile.py "$D/processed" ../calebvogt.github.io/projects/getz-vole-trapping/tile.png
+pip install -r requirements.txt
+
+# 1. Mirror Getz's site (about 20 MB)
+wget --mirror --no-parent -e robots=off --no-host-directories --cut-dirs=1 -P getz_mirror https://www.life.illinois.edu/getz/
+
+# 2. Clean the capture records into tidy tables
+python scripts/build_dataset.py getz_mirror processed
+
+# 3. Summaries for the explorer (JSON), and the project tile
+python scripts/export_web.py processed web_data
+python scripts/social.py processed web_data
+python scripts/traps.py processed web_data
+python scripts/structure.py processed web_data
+python scripts/make_tile.py processed tile.png
 ```
 
-To refresh the mirror: `wget --mirror --no-parent -e robots=off --no-host-directories --cut-dirs=1 https://www.life.illinois.edu/getz/`
+| Script | Writes |
+|---|---|
+| `build_dataset.py` | `captures.csv`, `nest_captures.csv`, `individuals.csv`, `sessions.csv`, `sites.csv`, `removals.csv`, `population_by_site.csv`, `population_main_series.csv` |
+| `export_web.py` | `meta.json` (sites, population series), `mass.json` (body mass), `site_NN.json` (individuals and captures per site) |
+| `social.py` | `social.json`, plus `social_animal_sessions.csv` in the processed folder |
+| `traps.py` | `traps.json` |
+| `structure.py` | `structure.json` |
+| `make_tile.py` | the project tile: 25 years of vole density, one strip per habitat |
+
+`load_raw.py`, `nest_data.py` and `sites.py` are helpers: the raw-file reader, the twice-weekly nest data,
+and study-site metadata transcribed from Getz's pages.
 
 ## Cleaning decisions
 
 - **Source**: the 38 "original field trap records" files (`MOnn`/`MPnn Final Cln.txt`): one row per capture
-  with animal, sex, reproductive condition, mass, date, AM/PM check, station, species, site, session.
+  with animal, sex, reproductive condition, mass, date, AM/PM check, station, species, site and session.
   Some files use old-Mac CR line endings.
 - **Individuals**: species + site + animal number. Getz re-used number sequences, so a number unseen at
-  a site for > 300 days becomes a new individual (id suffix `.2`). The gap distribution has a clean break, and only
-  one split occurs after date repair.
-- **Dates**: a date > 30 days from its site-session median (typos like `75/05/30` in a 1972 session) is
-  replaced with the median and flagged `date_fixed`.
+  a site for more than 300 days becomes a new individual (id suffix `.2`). The gap distribution has a clean
+  break, and only one split occurs after date repair.
+- **Dates**: a date more than 30 days from its site-session median (typos like `75/05/30` in a 1972 session)
+  is replaced with the median and flagged `date_fixed`.
 - **Twice-weekly nest data** (`nest_data.py`): Alf II/III, 1982–87, one row per animal per Mon–Tue or
   Thu–Fri session. Records link to a grid individual with the same number if within 60 days of its grid
   captures (2,077 of 3,114 Alf III numbers link; recorded sex agrees for 95%). Unlinked numbers become
-  nest-only individuals (id suffix `n`). Repro codes are mapped 0 → non-repro, 1/2 → reproductive.
+  nest-only individuals (id suffix `n`). Reproductive codes are mapped 0 → non-reproductive,
+  1/2 → reproductive.
 - **Density**: minimum number known alive (MNKA) per site × species × session, divided by site area,
-  overall and by sex (`mnka_m`, `mnka_f`; sex = each animal's modal recorded sex).
-  The 25-year means reproduce Getz et al. (2001): bluegrass *M. ochrogaster* 19.6/ha (published 18),
-  bluegrass *M. pennsylvanicus* 13.5 (14), tallgrass *M. ochrogaster* 8.0 (8).
+  overall and by sex (`mnka_m`, `mnka_f`; sex = each animal's modal recorded sex). The 25-year means
+  reproduce Getz et al. (2001): bluegrass *M. ochrogaster* 19.6/ha (published 18), bluegrass
+  *M. pennsylvanicus* 13.5 (14), tallgrass *M. ochrogaster* 8.0 (8).
 - **Main series**: Getz's stitched site sequence per habitat (`sites.py: MAIN_SERIES`).
 - **Removal sites** (MP09, MO10, MP14, MP18, MP19): counted per session in `removals.csv`, not treated as
   mark-recapture data.
-- **Grid coordinates** (`sites.py: grid_xy`): exact for alfalfa (col×100+row), BG 6/9/10/11 (25-row
-  serpentine), and TG 15–19 (7×7 serpentine). BG 8 column length, BG 7's three layouts, and the L-shaped
-  Trelease grid (TG 12–14) are approximate.
-- **AM/PM code 3** appears only in Alf II/III from 1982 to 1987, and is probably the 20:00 check from the
-  social-behavior study.
-
+- **Grid coordinates** (`sites.py: grid_xy`): exact for alfalfa (col × 100 + row), bluegrass 6/9/10/11
+  (25-row serpentine) and tallgrass 15–19 (7 × 7 serpentine). Bluegrass 8's column length, bluegrass 7's
+  three layouts and the L-shaped Trelease grid (tallgrass 12–14) are approximate.
+- **AM/PM code 3** appears only in Alf II/III from 1982 to 1987, and is probably the 20:00 check of the
+  social-behaviour study.
 - **Body mass** (`export_web.py: mass_summaries`): monthly grid captures only, one value per animal per
-  session (mean mass, highest repro code), masses 1–100 g; the ~20 male records coded pregnant are dropped.
-
+  session (mean mass, highest reproductive code), masses 1–100 g; the ~20 male records coded pregnant are
+  dropped.
 - **Social structure** (`social.py`): a *co-capture* is two same-species animals of known sex in the same
-  trap at the same check (multiple-capture traps); *trap sharing* is any common station within a session.
-  Outputs opposite-sex co-capture rate by density, two-animal trap composition vs. random expectation,
-  partner counts for breeding animals, partners vs. male mass, and pair fidelity (pairs caught together
-  again next session vs. neighbor pairs vs. any pair).
-- **Trap return** (`traps.py`): distance to previous capture (within session / later session) and, for
-  animals caught in 5+ sessions, captures per session and same-trap return over their first five sessions.
-  Exact-layout grids only (excludes 7, 12–14).
+  trap at the same check (Getz used multiple-capture traps); *trap sharing* is any common station within a
+  session. Outputs the opposite-sex co-capture rate by density, two-animal trap composition against random
+  expectation, partner counts for breeding animals, partners against male mass, and pair fidelity (pairs
+  caught together again the next session, against neighbour pairs and any pair).
+- **Trap return** (`traps.py`): distance to the previous capture (same session or a later one) and, for
+  animals caught in 5 or more sessions, captures per session and same-trap return over their first five
+  sessions. Exact-layout grids only (excludes 7 and 12–14).
+- **Dataset structure** (`structure.py`): animals caught per grid per month (coverage), first-capture
+  against caught-before counts per session, residence curves (share still known alive t months after first
+  capture, for animals first caught at least 18 months before their grid's last session), share of new
+  animals by month, and a year × month breeding calendar on the unmanipulated grids (females pregnant,
+  males in breeding condition).
 
-- **Dataset structure** (`structure.py`): animals caught per grid per month (coverage), first-capture vs.
-  caught-before counts per session, residence curves (share still known alive t months after first capture,
-  animals first caught ≥ 18 months before their grid's last session), share of new animals by month, and a
-  year × month breeding calendar on the unmanipulated grids (females pregnant, males in breeding condition).
+Not used: the home-range index files, the *Blarina* monthly densities, the raw-data compilations, and the
+unpublished manuscripts and appendices.
 
-## Not yet used
+## License
 
-- Home-range index files, *Blarina* monthly densities, raw-data compilations
-- Unpublished manuscripts and appendices (PDF)
+The code is MIT-licensed (`LICENSE`). The data are not part of this repository.

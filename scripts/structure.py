@@ -14,6 +14,7 @@
     python scripts/structure.py <processed_dir> <web_data_dir>
 """
 import json
+import os
 import sys
 
 import numpy as np
@@ -140,6 +141,7 @@ def breeding(c, sess):
 
 
 def main(proc, out):
+    os.makedirs(out, exist_ok=True)
     c, ind, pop, sess = load(proc)
     res = {"coverage": coverage(c, sess.copy()), "turnover": turnover(c, pop),
            "residence": residence(ind, sess), "recruit": recruit(c), "breeding": breeding(c, sess),

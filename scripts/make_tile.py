@@ -2,6 +2,7 @@
 
     python scripts/make_tile.py <processed_dir> <out_png>
 """
+import os
 import sys
 
 import matplotlib
@@ -14,6 +15,7 @@ BG = "#0d0d0d"
 
 
 def main(proc, out):
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     m = pd.read_csv(f"{proc}/population_main_series.csv")
     m["t"] = m["year"] + (m["month"] - 0.5) / 12
     fig, axes = plt.subplots(3, 1, figsize=(8, 4.5), dpi=150, sharex=True)
